@@ -185,6 +185,8 @@ struct tr_torrent
     uint64_t uploadedPrev;
     uint64_t corruptCur;
     uint64_t corruptPrev;
+    
+    bool sequentialOrder;
 
     uint64_t etaDLSpeedCalculatedAt;
     unsigned int etaDLSpeed_Bps;
@@ -224,7 +226,7 @@ struct tr_torrent
     bool startAfterVerify;
     bool isDirty;
     bool isQueued;
-
+    
     bool magnetVerify;
 
     bool infoDictOffsetIsCached;

@@ -87,6 +87,9 @@ static struct tr_option const options[] =
     { 'm', "portmap", "Enable portmapping via NAT-PMP or UPnP", "m", false, NULL },
     { 'M', "no-portmap", "Disable portmapping", "M", false, NULL },
     { 'p', "port", "Port for incoming peers (Default: " TR_DEFAULT_PEER_PORT_STR ")", "p", true, "<port>" },
+    { 500, "sequential-order",     "Download torrent sequentially", "seq", 0, NULL },
+    { 501, "random-order",         "Download torrent randomly", "rnd", 0, NULL },
+    { 502, "sequential-mask",      "Sequential only for these filemasks", "seq-mask", 1, "<mask>" },
     { 't', "tos", "Peer socket TOS (0 to 255, default=" TR_DEFAULT_PEER_SOCKET_TOS_STR ")", "t", true, "<tos>" },
     { 'u', "uplimit", "Set max upload speed in "SPEED_K_STR, "u", true, "<speed>" },
     { 'U', "no-uplimit", "Don't limit the upload speed", "U", false, NULL },
@@ -220,6 +223,7 @@ int tr_main(int argc, char* argv[])
     uint8_t* fileContents;
     size_t fileLength;
     char const* str;
+    bool sequentialBool;
 
     tr_formatter_mem_init(MEM_K, MEM_K_STR, MEM_M_STR, MEM_G_STR, MEM_T_STR);
     tr_formatter_size_init(DISK_K, DISK_K_STR, DISK_M_STR, DISK_G_STR, DISK_T_STR);
@@ -317,6 +321,9 @@ int tr_main(int argc, char* argv[])
         tr_sessionClose(h);
         return EXIT_FAILURE;
     }
+    
+    if (tr_variantDictFindBool (&settings, TR_KEY_sequential_order, &sequentialBool))
+        tr_torrentSetSequentialOrder (tor, sequentialBool);
 
     signal(SIGINT, sigHandler);
 #ifndef _WIN32
@@ -465,6 +472,25 @@ static int parseCommandLine(tr_variant* d, int argc, char const** argv)
         case 'w':
             tr_variantDictAddStr(d, TR_KEY_download_dir, optarg);
             break;
+            
+        case 500: //sequential-order
+            tr_variantDictAddBool (d, TR_KEY_sequential_order, true);
+            break;
+
+        case 501: //random-order
+            tr_variantDictAddBool (d, TR_KEY_sequential_order, false);
+            break;
+
+        case 502: {
+            static const char* delims = ";";
+            tr_variant * l = tr_variantDictAddList (d, TR_KEY_sequential_mask, 1);
+            char * arg = tr_strdup (optarg);
+            for (char * mask = strtok(arg, delims); mask; mask = strtok(NULL, delims)) {
+              tr_variantListAddStr (l, TR_KEY_sequential_mask, mask);
+            }
+            tr_free (arg);
+            break;
+          }
 
         case 910:
             tr_variantDictAddInt(d, TR_KEY_encryption, TR_ENCRYPTION_REQUIRED);

@@ -326,6 +326,8 @@ static tr_option opts[] =
         "GSR", false, NULL },
     { 710, "tracker-add", "Add a tracker to a torrent", "td", true, "<tracker>" },
     { 712, "tracker-remove", "Remove a tracker from a torrent", "tr", true, "<trackerId>" },
+    { 500, "sequential-order",       "Download torrent sequentially", "seq", 0, NULL },
+    { 501, "random-order",           "Download torrent randomly", "rnd", 0, NULL },
     { 's', "start", "Start the current torrent(s)", "s", false, NULL },
     { 'S', "stop", "Stop the current torrent(s)", "S", false, NULL },
     { 't', "torrent", "Set the current torrent(s)", "t", true, "<torrent>" },
@@ -451,6 +453,8 @@ static int getOptMode(int val)
     case 952: /* no-seedratio */
     case 984: /* honor-session */
     case 985: /* no-honor-session */
+    case 500: /* sequential-order*/
+    case 501: /* random-order*/
         return MODE_TORRENT_SET;
 
     case 920: /* session-info */
@@ -2724,7 +2728,15 @@ static int processArgs(char const* rpcurl, int argc, char const* const* argv)
             case 985:
                 tr_variantDictAddBool(args, TR_KEY_honorsSessionLimits, false);
                 break;
-
+                
+            case 500:
+                tr_variantDictAddBool (args, TR_KEY_sequential_order, true);
+                break;
+                
+            case 501:
+                tr_variantDictAddBool (args, TR_KEY_sequential_order, false);
+                break;
+                
             default:
                 assert("unhandled value" && 0);
                 break;

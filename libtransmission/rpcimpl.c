@@ -1470,6 +1470,8 @@ static char const* torrentSet(tr_session* session, tr_variant* args_in, tr_varia
         {
             errmsg = replaceTrackers(tor, tmp_variant);
         }
+        if (tr_variantDictFindBool (args_in, TR_KEY_sequential_order , &boolVal))
+            tr_torrentSetSequentialOrder(tor, boolVal);
 
         notify(session, TR_RPC_TORRENT_CHANGED, tor);
     }

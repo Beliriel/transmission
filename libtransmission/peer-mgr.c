@@ -1023,7 +1023,7 @@ static void pieceListSort(tr_swarm* s, enum piece_sort_state state)
 
 static void assertWeightedPiecesAreSorted(Torrent* t)
 {
-    if (t->endgame == 0)
+    if (t->endgame == 0 && !t->tor->sequentialOrder)
     {
         setComparePieceByWeightTorrent(t);
 
@@ -1149,7 +1149,12 @@ static void pieceListRebuild(tr_swarm* s)
         s->pieceCount = pieceCount;
 
         pieceListSort(s, PIECES_SORTED_BY_WEIGHT);
-
+        if(s->tor->sequentialOrder){
+            // FIXME: is it necessary here?
+            pieceListSort (s, PIECES_SORTED_BY_INDEX);
+        } else {
+            pieceListSort (s, PIECES_SORTED_BY_WEIGHT);
+        }
         /* cleanup */
         tr_free(pool);
     }
@@ -1181,6 +1186,10 @@ static void pieceListResortPiece(tr_swarm* s, struct weighted_piece* p)
 
     if (p == NULL)
     {
+        return;
+    }
+
+    if(s->tor->sequentialOrder){
         return;
     }
 
@@ -1364,6 +1373,19 @@ void tr_peerMgrGetNextRequests(tr_torrent* tor, tr_peer* peer, int numwant, tr_b
     {
         pieceListSort(s, PIECES_SORTED_BY_WEIGHT);
     }
+    
+    // TODO: replace sequentialOrder with sortMode
+    if (tor->sequentialOrder)
+    {
+      if (s->pieceSortState != PIECES_SORTED_BY_INDEX)
+          // TODO: check how often it gets here (someone resorts)
+          pieceListSort (s, PIECES_SORTED_BY_INDEX);
+    }
+    else
+    {
+      if (s->pieceSortState != PIECES_SORTED_BY_WEIGHT)
+          pieceListSort (s, PIECES_SORTED_BY_WEIGHT);
+    }
 
     assertReplicationCountIsExact(s);
     assertWeightedPiecesAreSorted(s);
@@ -1465,7 +1487,7 @@ void tr_peerMgrGetNextRequests(tr_torrent* tor, tr_peer* peer, int numwant, tr_b
     /* In most cases we've just changed the weights of a small number of pieces.
      * So rather than qsort()ing the entire array, it's faster to apply an
      * adaptive insertion sort algorithm. */
-    if (got > 0)
+    if (!tor->sequentialOrder && got > 0)
     {
         /* not enough requests || last piece modified */
         if (checkedPieceCount == s->pieceCount)
