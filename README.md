@@ -1,3 +1,6 @@
+## This is a modified version of transmission with the sequential patch added from https://github.com/midenok-forks/transmission
+## It doesn't really work yet and goal would be to have something like https://github.com/kuglee/transmission
+
 ## About
 
 Transmission is a fast, easy, and free BitTorrent client. It comes in several flavors:
